@@ -1,7 +1,7 @@
 local default_config = {
 	cmake_cmd = "cmake",
 	build_dir_template = { "build", "${buildType}", sep = "-", case = nil },
-	build_dir = ".",
+	build_dir = "",
 	build_types = { "Debug", "Release" },
 	options = {},
 }

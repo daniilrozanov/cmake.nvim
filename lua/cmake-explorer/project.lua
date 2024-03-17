@@ -36,7 +36,13 @@ function Project:new(o)
 end
 
 function Project:scan_build_dirs()
-	local candidates = Scandir.scan_dir(self.path, { hidden = false, only_dirs = true, depth = 0, silent = true })
+	local builds_root = utils.is_eq(
+		Path:new(config.build_dir):absolute(),
+		true,
+		config.build_dir,
+		Path:new(self.path, config.build_dir):absolute()
+	)
+	local candidates = Scandir.scan_dir(builds_root, { hidden = false, only_dirs = true, depth = 0, silent = true })
 	for _, v in ipairs(candidates) do
 		local fa = FileApi:new(v)
 		if fa and fa:exists() and fa:read_reply() then
