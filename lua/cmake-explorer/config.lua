@@ -1,8 +1,9 @@
 local default_config = {
 	cmake_cmd = "cmake",
-	build_dir_template = "build-{buildType}",
+	build_dir_template = { "build", "${buildType}", sep = "-", case = nil },
+	build_dir = ".",
 	build_types = { "Debug", "Release" },
-	options = { "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON" },
+	options = {},
 }
 
 local M = vim.deepcopy(default_config)

@@ -1,48 +1,10 @@
 local config = require("cmake-explorer.config")
-local globals = require("cmake-explorer.globals")
-local Build = require("cmake-explorer.build")
+local capabilities = require("cmake-explorer.capabilities")
+local FileApi = require("cmake-explorer.file_api")
 local Path = require("plenary.path")
 local Scandir = require("plenary.scandir")
 local utils = require("cmake-explorer.utils")
-
-local get_builds_in_dir = function(path)
-	local ret = {}
-	-- add to builds directories which accept is_build_dir()
-	local candidates = Scandir.scan_dir(path, { hidden = false, only_dirs = true, depth = 0, silent = true })
-	for _, v in ipairs(candidates) do
-		if Build.is_build_dir(v) then
-			local b = Build:new(v)
-			table.insert(ret, b)
-		end
-	end
-	return ret
-end
-
-local set_current_build = function(builds, filter)
-	local filter_func
-	if type(filter) == "number" then
-		if filter >= 1 and filter <= #builds then
-			return builds[filter]
-		else
-			print("set_current_build. index out of range. set to first")
-			return builds[1]
-		end
-	elseif type(filter) == "string" then
-		filter_func = function(v)
-			return v:build_type() == filter
-		end
-	elseif type(filter) == "function" then
-		filter_func = filter
-	else
-		return builds[1]
-	end
-	for _, v in ipairs(builds) do
-		if filter_func(v) == true then
-			return v
-		end
-	end
-	return builds[1]
-end
+local notif = require("cmake-explorer.notification")
 
 local Project = {}
 
@@ -65,69 +27,82 @@ function Project:new(o)
 	end
 
 	local obj = {
-		path = Path:new(path),
-		builds = nil,
-		current_build = nil,
+		path = Path:new(path):absolute(),
+		fileapis = {},
+		last_generate = {},
 	}
-	obj.builds = get_builds_in_dir(path)
-	obj.current_build = set_current_build(obj.builds, config.build_types[1])
 	setmetatable(obj, Project)
 	return obj
 end
 
--- finds build with passed params, creates new build if not found
-function Project:append_build(params)
-	local build_dir = (self.path / Build.name(params)):absolute()
-	for _, v in ipairs(self.builds) do
-		if v.path:absolute() == build_dir then
-			print("append_build. build found")
-			return v
+function Project:scan_build_dirs()
+	local candidates = Scandir.scan_dir(self.path, { hidden = false, only_dirs = true, depth = 0, silent = true })
+	for _, v in ipairs(candidates) do
+		local fa = FileApi:new(v)
+		if fa and fa:exists() and fa:read_reply() then
+			self.fileapis[v] = fa
 		end
 	end
-	print("append_build. new build")
-	table.insert(self.builds, Build:new(build_dir))
-	return self.builds[#self.builds]
 end
 
-function Project:symlink_compile_commands()
-	local src = (self.current_build.path / "compile_commands.json")
+function Project:symlink_compile_commands(path)
+	local src = Path:new(path, "compile_commands.json")
 	if src:exists() then
 		vim.cmd(
 			'silent exec "!'
-				.. config.cmake_cmd
-				.. " -E create_symlink "
-				.. src:absolute()
-				.. " "
-				.. (self.path / "compile_commands.json"):absolute()
-				.. '"'
+			.. config.cmake_cmd
+			.. " -E create_symlink "
+			.. src:absolute()
+			.. " "
+			.. Path:new(self.path, "compile_commands.json"):absolute()
+			.. '"'
 		)
 	end
 end
 
-function Project:list_build_dirs_names()
-	local ret = {}
-	for _, v in ipairs(self.builds) do
-		table.insert(ret, v.path:absolute())
-	end
-	return ret
-end
-
 function Project:configure(params)
 	params = params or {}
+	local args = utils.generate_args(params, self.path)
+	local build_dir = utils.build_path(params, self.path)
+	if not args then
+		return
+	end
+	if not self.fileapis[build_dir] then
+		local fa = FileApi:new(build_dir)
+		if not fa then
+			notif.notify("Cannot fileapi object", vim.log.levels.ERROR)
+			return
+		end
+		if not fa:create() then
+			return
+		end
+		self.fileapis[build_dir] = fa
+	end
 
-	self.current_build = self:append_build(params)
-	local args = vim.tbl_deep_extend("keep", params.args or {}, config.options or {})
-	table.insert(args, "-G" .. (params.generator or globals.generators[1]))
-	table.insert(args, "-DCMAKE_BUILD_TYPE=" .. (params.build_type or config.build_types[1]))
-	table.insert(args, "-S" .. self.path:absolute())
-	table.insert(args, "-B" .. self.current_build.path:absolute())
 	return {
 		cmd = config.cmake_cmd,
 		args = args,
+		cwd = Path:new(self.path):absolute(),
 		after_success = function()
-			self:symlink_compile_commands()
+			self.last_generate = build_dir
+			self.fileapis[build_dir]:read_reply()
+			self:symlink_compile_commands(build_dir)
 		end,
 	}
+end
+
+function Project:configure_last()
+	return self:configure(self.last_generate)
+end
+
+function Project:list_build_dirs()
+	local ret = {}
+	for k, _ in pairs(self.fileapis) do
+		local build = {}
+		build.path = k
+		table.insert(ret, build)
+	end
+	return ret
 end
 
 return Project

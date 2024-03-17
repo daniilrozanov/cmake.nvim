@@ -20,6 +20,11 @@ function M.start(command)
 		on_exit = vim.schedule_wrap(function(_, code, signal)
 			if code == 0 and signal == 0 and command.after_success then
 				command.after_success()
+			else
+				vim.notify(
+					"Code " .. tostring(code) .. ": " .. command.cmd .. " " .. table.concat(command.args, " "),
+					vim.log.levels.ERROR
+				)
 			end
 		end),
 	})
