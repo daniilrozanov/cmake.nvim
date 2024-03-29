@@ -2,73 +2,38 @@ local config = require("cmake-explorer.config")
 local capabilities = require("cmake-explorer.capabilities")
 local Path = require("plenary.path")
 
-local utils = {
-	plugin_prefix = "CM",
-}
+local utils = {}
 
-utils.build_dir_name = function(params)
-	if capabilities.is_multiconfig_generator(params.generator) then
-		return config.build_dir_template[1]
-	else
-		local paths = {}
-		for k, v in ipairs(config.build_dir_template) do
-			local path = v:gsub("${buildType}", params.build_type)
-			if k ~= 1 and config.build_dir_template.case then
-				if config.build_dir_template.case == "lower" then
-					path = string.lower(path)
-				elseif config.build_dir_template.case == "upper" then
-					path = string.upper(path)
-				end
-			end
-			table.insert(paths, path)
-		end
-		return table.concat(paths, config.build_dir_template.sep)
-	end
-end
-
-utils.build_path = function(params, source_dir)
-	if type(params) == "string" then
-		return params
-	end
+utils.build_path = function(build_dir, source_dir)
 	local build_path = Path:new(config.build_dir)
 	if build_path:is_absolute() then
-		return (build_path / utils.build_dir_name(params)):absolute()
+		return (build_path / build_dir):absolute()
 	else
-		return Path:new(source_dir, build_path, utils.build_dir_name(params)):absolute()
+		return Path:new(build_path, build_dir):normalize()
 	end
 end
 
-utils.generate_args = function(params, source_dir)
-	local ret = {}
-
-	if type(params) == "string" then
-		table.insert(ret, "-B" .. Path:new(params):make_relative(source_dir))
-	else
-		if params.preset then
-			table.insert(ret, "--preset " .. params.preset)
-		else
-			if params.generator and vim.tbl_contains(capabilities.generators(), params.generator) then
-				table.insert(ret, "-G" .. params.generator)
-			end
-
-			params.build_type = params.build_type or config.build_types[1]
-			if params.build_type then
-				table.insert(ret, "-DCMAKE_BUILD_TYPE=" .. params.build_type)
-			end
-
-			table.insert(ret, "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
-
-			if type(params.args) == "table" then
-				for k, v in pairs(params.args) do
-					table.insert(ret, "-D" .. k .. "=" .. v)
-				end
-			elseif type(params.args) == "string" then
-				table.insert(ret, params.args)
-			end
-			table.insert(ret, "-B" .. Path:new(utils.build_path(params, source_dir)):make_relative(source_dir))
-		end
+utils.substitude = function(str, subs)
+	local ret = str
+	for k, v in pairs(subs) do
+		ret = ret:gsub(k, v)
 	end
 	return ret
+end
+
+function utils.symlink_compile_commands(src_path, dst_path)
+	local src = Path:new(src_path, "compile_commands.json")
+	if src:exists() then
+		vim.cmd(
+			'silent exec "!'
+			.. config.cmake_path
+			.. " -E create_symlink "
+			.. src:normalize()
+			.. " "
+			.. Path:new(dst_path, "compile_commands.json"):normalize()
+			.. '"'
+		)
+	end
 end
 
 utils.is_eq = function(val, cmp, if_eq, if_not_eq)
@@ -101,6 +66,27 @@ utils.is_neq = function(val, cmp, if_eq, if_not_eq)
 			return nil
 		end
 	end
+end
+
+utils.make_maplike_list = function(proj)
+	local mt = {}
+	mt.__index = function(t, k)
+		for _, value in ipairs(t) do
+			if proj(value) == k then
+				return value
+			end
+		end
+	end
+	mt.__newindex = function(t, k, v)
+		for key, value in ipairs(t) do
+			if proj(value) == k then
+				rawset(t, key, v)
+				return
+			end
+		end
+		rawset(t, #t + 1, v)
+	end
+	return mt
 end
 
 return utils

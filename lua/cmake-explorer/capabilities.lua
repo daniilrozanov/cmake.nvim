@@ -8,7 +8,7 @@ local multiconfig_generators = {
 	"Visual Studio 15 2017",
 	"Visual Studio 16 2019",
 	"Visual Studio 17 2022",
-	-- "Green Hills MULTI"
+	"Green Hills MULTI",
 }
 
 local Capabilities = {
@@ -27,6 +27,10 @@ function Capabilities.generators()
 end
 
 function Capabilities.is_multiconfig_generator(generator)
+	-- if generator is nil, assume is is not multiconifg
+	if not generator then
+		return
+	end
 	return vim.tbl_contains(multiconfig_generators, generator)
 end
 
@@ -35,7 +39,7 @@ function Capabilities.has_fileapi()
 end
 
 Capabilities.setup = function()
-	local output = vim.fn.system({ config.cmake_cmd, "-E", "capabilities" })
+	local output = vim.fn.system({ config.cmake_path, "-E", "capabilities" })
 	Capabilities.json = vim.json.decode(output)
 end
 

@@ -6,6 +6,7 @@ function Notification.notify(msg, lvl, opts)
   opts = opts or {}
   if has_notify then
     opts.hide_from_history = true
+    opts.title = "CMake Explorer"
     return notify(msg, lvl, opts)
   end
 end

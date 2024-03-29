@@ -1,4 +1,5 @@
 local Job = require("plenary.job")
+local notif = require("cmake-explorer.notification")
 
 local M = {}
 
@@ -12,17 +13,33 @@ function M.start(command)
 	end
 	local env = vim.tbl_extend("force", vim.loop.os_environ(), command.env and command.env or {})
 
-	vim.notify(command.cmd .. " " .. table.concat(command.args, " "))
+	if command.before_run then
+		if not command.before_run() then
+			notif.notify("Before run command failed", vim.log.levels.ERROR)
+			return
+		end
+	end
+	notif.notify(command.cmd .. " " .. table.concat(command.args, " "))
 	local job = Job:new({
 		command = command.cmd,
 		args = command.args,
 		env = env,
+		on_stdout = vim.schedule_wrap(function(err, data) end),
 		on_exit = vim.schedule_wrap(function(_, code, signal)
-			if code == 0 and signal == 0 and command.after_success then
-				command.after_success()
+			if code == 0 and signal == 0 then
+				if command.after_success then
+					command.after_success()
+				end
 			else
-				vim.notify(
-					"Code " .. tostring(code) .. ": " .. command.cmd .. " " .. table.concat(command.args, " "),
+				notif.notify(
+					"Code "
+					.. code
+					.. " Signal "
+					.. signal
+					.. ": "
+					.. command.cmd
+					.. " "
+					.. table.concat(command.args, " "),
 					vim.log.levels.ERROR
 				)
 			end
