@@ -1,5 +1,5 @@
 local previewers = require("telescope.previewers")
-local config = require("cmake-explorer.config")
+local config = require("cmake.config")
 
 local M = {}
 

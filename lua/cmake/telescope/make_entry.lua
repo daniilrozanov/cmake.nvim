@@ -1,11 +1,11 @@
 local make_entry = require("telescope.make_entry")
 local entry_display = require("telescope.pickers.entry_display")
-local config = require("cmake-explorer.config")
+local config = require("cmake.config")
 
 local M = {}
 
 M.gen_from_configure = function(opts)
-  local project = require("cmake-explorer").project
+  local project = require("cmake").project
   local displayer = entry_display.create({
     separator = " ",
     items = {
@@ -30,7 +30,7 @@ M.gen_from_configure = function(opts)
 end
 
 M.gen_from_build = function(opts)
-  local project = require("cmake-explorer").project
+  local project = require("cmake").project
   local displayer = entry_display.create({
     separator = " ",
     items = {
