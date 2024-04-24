@@ -35,7 +35,7 @@ local default_config = {
 		close_on_exit = false,
 		hidden = false,
 		clear_env = false,
-		focus = true,
+		focus = false,
 	},
 	notification = {
 		after = "success",

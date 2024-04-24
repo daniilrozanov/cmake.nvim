@@ -83,11 +83,8 @@ M.target_execute = function(command, opts)
 		runnable:open()
 	end
 	vim.notify(vim.inspect(command), vim.log.levels.INFO)
-	if command.cd then
-		runnable:send("cd " .. command.cd)
-	end
 	if command.cmd then
-		runnable:send(command.cmd)
+		runnable:send(command.cmd, not config.runner_terminal.focus)
 	end
 end
 
