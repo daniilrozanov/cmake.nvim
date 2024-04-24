@@ -61,7 +61,11 @@ M.cmake_execute = function(command, opts)
 end
 
 M.cmake_toggle = function()
-	cmake:toggle()
+	if cmake then
+		cmake:toggle()
+	else
+		vim.notify("No CMake terminal")
+	end
 end
 
 M.target_execute = function(command, opts)
@@ -75,16 +79,16 @@ M.target_execute = function(command, opts)
 	if not runnable then
 		runnable = Terminal:new(term_opts)
 	end
-	local cd = "cd " .. command.cwd
-	local cmd = "./" .. command.cmd
-	vim.notify(cd)
-	vim.notify(cmd)
-
 	if not runnable:is_open() then
 		runnable:open()
 	end
-	runnable:send(cd)
-	runnable:send(cmd)
+	vim.notify(vim.inspect(command), vim.log.levels.INFO)
+	if command.cd then
+		runnable:send("cd " .. command.cd)
+	end
+	if command.cmd then
+		runnable:send(command.cmd)
+	end
 end
 
 return M

@@ -17,13 +17,6 @@ local default_config = {
 					release = { short = "Release", long = "Long release", buildType = "Release" },
 				},
 			},
-			{
-				default = "static",
-				choices = {
-					static = { short = "Static", long = "Long static", linkage = "static" },
-					shared = { short = "Shared", long = "Long shared", linkage = "shared" },
-				},
-			},
 		},
 		parallel_jobs = 0,
 		save_before_build = true,

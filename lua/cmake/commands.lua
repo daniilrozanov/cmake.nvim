@@ -26,6 +26,10 @@ M.register_commands = function()
 	cmd("CMakeRunSelect", function()
 		require("cmake.actions").run_tagret_select()
 	end, { desc = "Select build option and build" })
+
+	cmd("CMakeToggle", function()
+		require("cmake.actions").toggle()
+	end, { desc = "Toggle CMake terminal" })
 end
 
 return M
