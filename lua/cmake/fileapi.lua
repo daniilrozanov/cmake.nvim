@@ -2,7 +2,7 @@ local capabilities = require("cmake.capabilities")
 local Path = require("plenary.path")
 local scan = require("plenary.scandir")
 local utils = require("cmake.utils")
-local uv = vim.loop
+local uv = vim.uv or vim.loop
 
 local query_path_suffix = { ".cmake", "api", "v1", "query", "client-cmake", "query.json" }
 local reply_dir_suffix = { ".cmake", "api", "v1", "reply" }

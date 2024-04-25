@@ -1,6 +1,8 @@
 local default_config = {
 	cmake = {
 		cmake_path = "cmake",
+		ctest_path = "ctest",
+		cpack_path = "cpack",
 		environment = {},
 		configure_environment = {},
 		build_directory = "${workspaceFolder}/build-${buildType}",
@@ -21,9 +23,10 @@ local default_config = {
 			},
 		},
 		parallel_jobs = 0,
-		save_before_build = true,
 		source_directory = "${workspaceFolder}",
 	},
+	save_before_build = true,
+	generate_after_save = true,
 	terminal = {
 		direction = "vertical",
 		display_name = "CMake",

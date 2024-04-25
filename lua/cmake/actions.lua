@@ -5,6 +5,8 @@ local utils = require("cmake.utils")
 local constants = require("cmake.constants")
 local Path = require("plenary.path")
 
+local uv = vim.uv or vim.loop
+
 local M = {}
 
 local default_generate_exe_opts = {
@@ -92,7 +94,7 @@ M.run_tagret = function(opts)
 		M.run_tagret_select(opts)
 	else
 		local command = {
-			cmd = Path:new(pr.current_directory(), _curr_exe_cmd.path):make_relative(vim.loop.cwd()),
+			cmd = Path:new(pr.current_directory(), _curr_exe_cmd.path):make_relative(uv.cwd()),
 		}
 		t.target_execute(command)
 	end
@@ -113,7 +115,7 @@ M.run_tagret_select = function(opts)
 		end
 		pr.set_current_executable_target(idx)
 		local command = {
-			cmd = Path:new(pr.current_directory(), choice.path):make_relative(vim.loop.cwd()),
+			cmd = Path:new(pr.current_directory(), choice.path):make_relative(uv.cwd()),
 		}
 		t.target_execute(command)
 	end)

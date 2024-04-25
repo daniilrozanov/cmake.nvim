@@ -2,7 +2,7 @@ local config = require("cmake.config")
 local capabilities = require("cmake.capabilities")
 local scan = require("plenary.scandir")
 local Path = require("plenary.path")
-local uv = vim.loop
+local uv = vim.uv or vim.loop
 
 local utils = {}
 

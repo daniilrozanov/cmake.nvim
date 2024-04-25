@@ -1,13 +1,15 @@
 local config = require("cmake.config")
 local utils = require("cmake.utils")
 
+local uv = vim.uv or vim.loop
+
 local VariantConfig = {}
 
 VariantConfig.__index = VariantConfig
 
 local global_variant_subs = {
-	["${workspaceFolder}"] = vim.loop.cwd(),
-	["${userHome}"] = vim.loop.os_homedir(),
+	["${workspaceFolder}"] = uv.cwd(),
+	["${userHome}"] = uv.os_homedir(),
 }
 
 local _configure_args = function(obj, build_directory)

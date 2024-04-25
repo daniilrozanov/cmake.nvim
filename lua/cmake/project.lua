@@ -11,11 +11,17 @@ local configs = {}
 local current_config = nil
 local fileapis = {}
 
+local reset_internals = function()
+	configs = {}
+	current_config = nil
+	fileapis = {}
+end
+
 local append_after_success_actions = function()
 	local read_reply = function(v, not_presented)
 		if (not_presented and not fileapis[v.directory]) or not not_presented then
 			--TODO: replace to vim.fs.joinpath after nvim 0.10 release
-			utils.symlink(v.directory .. "/compile_commands.json", vim.loop.cwd())
+			utils.symlink(v.directory .. "/compile_commands.json", uv.cwd())
 			fileapis[v.directory] = { targets = {} }
 			FileApi.read_reply(v.directory, function(target)
 				table.insert(fileapis[v.directory].targets, target)
@@ -58,7 +64,6 @@ function Project.from_variants(variants)
 		list_variants[#list_variants]._name = k
 	end
 	table.sort(list_variants, function(a, b)
-		vim.notify(a._name .. " " .. b._name)
 		return a._name < b._name
 	end)
 	for var, is_default in VariantConfig.cartesian_product(list_variants) do
@@ -185,6 +190,7 @@ end
 
 function Project.setup(opts)
 	opts = opts or {}
+	reset_internals()
 	local variants_path = vim.fs.joinpath(uv.cwd(), constants.variants_yaml_filename)
 	utils.file_exists(variants_path, function(variants_exists)
 		if variants_exists then
