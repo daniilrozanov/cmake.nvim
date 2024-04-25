@@ -97,9 +97,7 @@ function VariantConfig:new(source)
 end
 
 function VariantConfig.cartesian_product(sets)
-	-- vim.notify("cartesian_product", vim.log.levels.INFO)
 	local function collapse_result(res)
-		-- vim.notify("collapse_result", vim.log.levels.INFO)
 		local ret = {
 			short = {},
 			long = {},
@@ -130,7 +128,6 @@ function VariantConfig.cartesian_product(sets)
 				ret.env[ename] = eres
 			end
 		end
-		-- vim.notify(vim.inspect(ret), vim.log.levels.INFO)
 		return VariantConfig:new(ret), is_default
 	end
 	local result = {}

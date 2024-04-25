@@ -1,6 +1,8 @@
 local pr = require("cmake.project")
 local config = require("cmake.config")
 local t = require("cmake.terminal")
+local utils = require("cmake.utils")
+local constants = require("cmake.constants")
 local Path = require("plenary.path")
 
 local M = {}
@@ -119,6 +121,23 @@ end
 
 M.toggle = function()
 	t.cmake_toggle()
+end
+
+M.edit_variants = function()
+	utils.file_exists(constants.variants_yaml_filename, function(variants_exists)
+		if variants_exists then
+			vim.schedule(function()
+				vim.cmd(string.format("e %s", constants.variants_yaml_filename))
+			end)
+		else
+			local default_yaml = require("cmake.lyaml").dump(config.cmake.variants)
+			utils.write_file(constants.variants_yaml_filename, default_yaml, function()
+				vim.schedule(function()
+					vim.cmd(string.format("e %s", constants.variants_yaml_filename))
+				end)
+			end)
+		end
+	end)
 end
 
 return M

@@ -29,7 +29,11 @@ M.register_commands = function()
 
 	cmd("CMakeToggle", function()
 		require("cmake.actions").toggle()
-	end, { desc = "Toggle CMake terminal" })
+	end, { desc = "Toggle terminal with cmake command" })
+
+	cmd("CMakeEditVariants", function()
+		require("cmake.actions").edit_variants()
+	end, { desc = "Edit variants" })
 end
 
 return M

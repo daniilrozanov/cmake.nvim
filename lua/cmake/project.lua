@@ -1,9 +1,9 @@
 local config = require("cmake.config")
 local VariantConfig = require("cmake.variants")
 local FileApi = require("cmake.fileapi")
-local lyaml = require("cmake.lyaml")
 local utils = require("cmake.utils")
-local scan = require("plenary.scandir")
+local constants = require("cmake.constants")
+local uv = vim.uv or vim.loop
 
 local Project = {}
 
@@ -52,7 +52,16 @@ end
 
 -- TODO: validate yaml and fallback to config's variants if not valid
 function Project.from_variants(variants)
-	for var, is_default in VariantConfig.cartesian_product(variants) do
+	local list_variants = {}
+	for k, v in pairs(variants) do
+		table.insert(list_variants, v)
+		list_variants[#list_variants]._name = k
+	end
+	table.sort(list_variants, function(a, b)
+		vim.notify(a._name .. " " .. b._name)
+		return a._name < b._name
+	end)
+	for var, is_default in VariantConfig.cartesian_product(list_variants) do
 		var.current_build = 1
 		table.insert(configs, var)
 		current_config = not current_config and is_default and #configs or current_config
@@ -157,7 +166,7 @@ function Project.create_fileapi_query(opts, callback)
 		path = configs[opts.idx].directory
 	elseif type(opts.path) == "string" then
 		path = opts.path
-	--TODO: compare getmetatable(opts.config) with VariantConfig (and PresetsConfig in future)
+		--TODO: compare getmetatable(opts.config) with VariantConfig (and PresetsConfig in future)
 	elseif type(opts.config) == "table" then
 		path = opts.config.directory
 	else
@@ -176,22 +185,17 @@ end
 
 function Project.setup(opts)
 	opts = opts or {}
-	scan.scan_dir_async(".", {
-		depth = 0,
-		hidden = true,
-		silent = true,
-		search_pattern = ".variants.yaml",
-		on_exit = function(variants_results)
-			if #variants_results ~= 0 then
-				utils.read_file(variants_results[1], function(variants_data)
-					local yaml = lyaml.eval(variants_data)
-					Project.from_variants(yaml)
-				end)
-			else
-				Project.from_variants(config.cmake.variants)
-			end
-		end,
-	})
+	local variants_path = vim.fs.joinpath(uv.cwd(), constants.variants_yaml_filename)
+	utils.file_exists(variants_path, function(variants_exists)
+		if variants_exists then
+			utils.read_file(variants_path, function(variants_data)
+				local yaml = require("cmake.lyaml").eval(variants_data)
+				Project.from_variants(yaml)
+			end)
+		else
+			Project.from_variants(config.cmake.variants)
+		end
+	end)
 end
 
 return Project

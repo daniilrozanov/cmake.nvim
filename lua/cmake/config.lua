@@ -9,12 +9,14 @@ local default_config = {
 		build_tool_args = {},
 		generator = nil,
 		variants = {
-			{
+			buildType = {
 				default = "debug",
 				description = "Build type",
 				choices = {
-					debug = { short = "Debug", long = "Long debug", buildType = "Debug" },
-					release = { short = "Release", long = "Long release", buildType = "Release" },
+					debug = { short = "Debug", buildType = "Debug" },
+					release = { short = "Release", buildType = "Release" },
+					relWithDebInfo = { short = "Release with debug info", buildType = "RelWithDebInfo" },
+					minSizeRel = { short = "Minimal size releaze", buildType = "MinSizeRel" },
 				},
 			},
 		},
@@ -23,7 +25,7 @@ local default_config = {
 		source_directory = "${workspaceFolder}",
 	},
 	terminal = {
-		direction = "horizontal",
+		direction = "vertical",
 		display_name = "CMake",
 		close_on_exit = "success",
 		hidden = false,
@@ -31,7 +33,7 @@ local default_config = {
 		focus = false,
 	},
 	runner_terminal = {
-		direction = "horizontal",
+		direction = "vertical",
 		close_on_exit = false,
 		hidden = false,
 		clear_env = false,
@@ -41,8 +43,8 @@ local default_config = {
 		after = "success",
 	},
 	variants_display = {
-		short = { sep = " × " },
-		long = { sep = " ❄ " },
+		short = { sep = " × ", show = true },
+		long = { sep = " ❄ ", show = false },
 	},
 }
 

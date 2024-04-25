@@ -35,7 +35,6 @@ M.cmake_execute = function(command, opts)
 					)
 				end
 			elseif config.notification.after == "failure" or config.notification.after == true then
-				vim.notify(vim.inspect("failure "))
 				local msg = "CMake failed. Code " .. tostring(code)
 				local opt_msg = vim.tbl_get(opts, "notify", "err_message")
 				if type(opt_msg) == "string" then
@@ -82,7 +81,6 @@ M.target_execute = function(command, opts)
 	if not runnable:is_open() then
 		runnable:open()
 	end
-	vim.notify(vim.inspect(command), vim.log.levels.INFO)
 	if command.cmd then
 		runnable:send(command.cmd, not config.runner_terminal.focus)
 	end

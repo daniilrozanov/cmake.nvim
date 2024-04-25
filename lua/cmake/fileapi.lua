@@ -47,6 +47,8 @@ function FileApi.read_reply(path, callback)
 						if object.kind == "codemodel" then
 							utils.read_file(Path:new(reply_dir, object.jsonFile):absolute(), function(codemodel_data)
 								local codemodel = vim.json.decode(codemodel_data)
+								--FIX: this loop does not read all files if codemodel contains many targets. This is because libuv (or some external settings) forbids to open files
+								-- in async mode more than some limit number. Seems like the solution is to queue these calls and limit max number for opened files per time
 								for _, target in ipairs(codemodel.configurations[1].targets) do
 									utils.read_file(
 										Path:new(reply_dir, target.jsonFile):absolute(),
