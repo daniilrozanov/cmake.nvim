@@ -4,7 +4,7 @@ local constants = require("cmake.constants")
 
 local autocmds = {}
 
-function autocmds.setuo()
+function autocmds.setup()
 	local cmake_nvim_augroup = vim.api.nvim_create_augroup("CMake", {})
 	vim.api.nvim_create_autocmd({ "BufWritePost" }, {
 		group = cmake_nvim_augroup,

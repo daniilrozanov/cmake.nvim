@@ -16,7 +16,7 @@ function M.setup(opts)
 			if cmake_lists_exists then
 				require("cmake.capabilities").setup(function()
 					vim.schedule(function()
-						autocmds.setuo()
+						autocmds.setup()
 						commands.register_commands()
 					end)
 					require("cmake.project").setup()
