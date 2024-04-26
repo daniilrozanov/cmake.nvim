@@ -7,6 +7,8 @@ local uv = vim.uv or vim.loop
 
 local Project = {}
 
+local initialised = false
+
 local configs = {}
 local current_config = nil
 local fileapis = {}
@@ -15,6 +17,7 @@ local reset_internals = function()
 	configs = {}
 	current_config = nil
 	fileapis = {}
+	initialised = true
 end
 
 local append_after_success_actions = function()
@@ -188,9 +191,7 @@ function Project.create_fileapi_query(opts, callback)
 	end)
 end
 
-function Project.setup(opts)
-	opts = opts or {}
-	reset_internals()
+local do_setup = function(opts)
 	local variants_path = vim.fs.joinpath(uv.cwd(), constants.variants_yaml_filename)
 	utils.file_exists(variants_path, function(variants_exists)
 		if variants_exists then
@@ -202,6 +203,29 @@ function Project.setup(opts)
 			Project.from_variants(config.cmake.variants)
 		end
 	end)
+end
+
+function Project.setup(opts)
+	opts = opts or {}
+	vim.notify(
+		"Start setup. " .. vim.inspect(opts.first_time_only) .. " " .. tostring(initialised),
+		vim.log.levels.INFO
+	)
+	if opts.first_time_only and initialised then
+		vim.notify(
+			"Setup abort. " .. vim.inspect(opts.first_time_only) .. " " .. tostring(initialised),
+			vim.log.levels.INFO
+		)
+		return
+	end
+	reset_internals()
+	if not initialised then
+		require("cmake.capabilities").setup(function()
+			do_setup(opts)
+		end)
+	else
+		do_setup(opts)
+	end
 end
 
 return Project

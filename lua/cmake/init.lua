@@ -12,15 +12,14 @@ function M.setup(opts)
 	opts = opts or {}
 	config.setup(opts)
 	if vim.fn.executable(config.cmake.cmake_path) then
+		autocmds.setup()
 		utils.file_exists(vim.fs.joinpath(uv.cwd(), constants.cmakelists), function(cmake_lists_exists)
 			if cmake_lists_exists then
-				require("cmake.capabilities").setup(function()
-					vim.schedule(function()
-						autocmds.setup()
-						commands.register_commands()
-					end)
-					require("cmake.project").setup()
+				vim.schedule(function()
+					autocmds.set_on_variants()
+					commands.register_commands()
 				end)
+				require("cmake.project").setup({ first_time_only = true })
 			else
 			end
 		end)

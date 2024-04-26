@@ -27,8 +27,17 @@ local default_build_exe_opts = {
 	},
 }
 
+M.reset_project = function(opts)
+	require("cmake.project").setup(opts)
+end
+
 M.generate = function(opts)
-	pr.create_fileapi_query({ idx = pr.current_generate_option_idx() }, function()
+	local idx = pr.current_generate_option_idx()
+	if not idx then
+		vim.notify("CMake: no project to generate")
+		return
+	end
+	pr.create_fileapi_query({ idx = idx }, function()
 		vim.schedule(function()
 			t.cmake_execute(pr.current_generate_option().generate_command, default_generate_exe_opts)
 		end)
