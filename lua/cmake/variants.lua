@@ -44,6 +44,9 @@ end
 local _build_args = function(obj, build_directory)
 	local args = { "--build" }
 	table.insert(args, build_directory)
+	if config.cmake.parallel_jobs then
+		table.insert(args, "-j " .. tostring(config.cmake.parallel_jobs))
+	end
 	if #obj.buildArgs ~= 0 then
 		for _, v in ipairs(obj.buildArgs) do
 			table.insert(args, v)

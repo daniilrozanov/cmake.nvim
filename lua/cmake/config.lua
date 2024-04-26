@@ -22,21 +22,21 @@ local default_config = {
 				},
 			},
 		},
-		parallel_jobs = 0,
-		source_directory = "${workspaceFolder}",
+		parallel_jobs = nil, --#(vim.uv or vim.loop).cpu_info(),
+		-- source_directory = "${workspaceFolder}", --TODO: not used
 	},
 	save_before_build = true,
 	generate_after_save = true,
 	terminal = {
-		direction = "vertical",
-		display_name = "CMake",
+		direction = "horizontal",
+		display_name = "CMake", --TODO: not used
 		close_on_exit = "success",
 		hidden = false,
 		clear_env = false,
 		focus = false,
 	},
 	runner_terminal = {
-		direction = "vertical",
+		direction = "horizontal",
 		close_on_exit = false,
 		hidden = false,
 		clear_env = false,

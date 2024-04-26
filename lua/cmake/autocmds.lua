@@ -28,7 +28,7 @@ function autocmds.setup()
 			desc = "Generate project after saving CMakeLists.txt",
 		})
 	end
-	--NOTE: this autocmd was written only to handle very rarely case when inside directory
+	--NOTE: this autocmd was written only to handle very rare case when inside directory
 	--without CMakeLists.txt neovim starts like `nvim CMakeLists.txt`. In this case initial
 	--setup will not make the affect and to correctry process the file save, we need to create
 	--this autocommand so it reinitializes the project if it has not been done before. IMHO this
