@@ -207,15 +207,7 @@ end
 
 function Project.setup(opts)
 	opts = opts or {}
-	vim.notify(
-		"Start setup. " .. vim.inspect(opts.first_time_only) .. " " .. tostring(initialised),
-		vim.log.levels.INFO
-	)
 	if opts.first_time_only and initialised then
-		vim.notify(
-			"Setup abort. " .. vim.inspect(opts.first_time_only) .. " " .. tostring(initialised),
-			vim.log.levels.INFO
-		)
 		return
 	end
 	reset_internals()
