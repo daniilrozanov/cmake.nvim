@@ -82,15 +82,18 @@ function Project.from_variants(variants)
 	init_fileapis()
 end
 
---NOTE: Neovim craches on this code
-function Project.clear_cache(callback)
-	uv.fs_unlink(vim.fs.joinpath(Project.current_directory(), "CMakeCache.txt"), function(f_err)
-		assert(f_err, f_err)
-		uv.fs_unlink(vim.fs.joinpath(Project.current_directory(), "CMakeFiles"), function(d_err)
-			assert(d_err, d_err)
-			callback()
-		end)
-	end)
+function Project.clear_cache()
+	local cd = Project.current_directory()
+	local Path = require("plenary.path")
+	Path:new(vim.fs.joinpath(cd, "CMakeCache.txt")):rm()
+	Path:new(vim.fs.joinpath(cd, "CMakeFiles")):rm({ recursive = true })
+	-- uv.fs_unlink(vim.fs.joinpath(Project.current_directory(), "CMakeCache.txt"), function(f_err, _)
+	-- 	assert(f_err, f_err)
+	-- uv.fs_unlink(vim.fs.joinpath(Project.current_directory(), "CMakeFiles"), function(d_err)
+	-- 	assert(d_err, d_err)
+	-- 	callback()
+	-- end)
+	-- end)
 end
 
 function Project.generate_options(opts)

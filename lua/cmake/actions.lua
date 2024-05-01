@@ -83,10 +83,9 @@ local _generate = function(option, opts)
 		end)
 	end
 	if opts.fresh then
-		pr.clear_cache(main_path)
-	else
-		main_path()
+		pr.clear_cache()
 	end
+	main_path()
 end
 
 local _for_current_generate_option = function(func)

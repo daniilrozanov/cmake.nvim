@@ -9,12 +9,12 @@ local reply_dir_suffix = { ".cmake", "api", "v1", "reply" }
 local FileApi = {}
 
 function FileApi.create(path, callback)
-	local query = Path:new(path, unpack(query_path_suffix)):normalize()
+	local query = vim.fs.joinpath(path, unpack(query_path_suffix))
 	utils.file_exists(query, function(exists)
 		if not exists then
 			if capabilities.json.fileApi then
 				vim.schedule(function()
-					vim.fn.mkdir(Path:new(vim.fs.dirname(query)):absolute(), "p")
+					vim.fn.mkdir(vim.fs.dirname(query), "p")
 					utils.write_file(query, vim.json.encode(capabilities.json.fileApi), callback)
 				end)
 			else
