@@ -38,27 +38,18 @@ function Capabilities.has_fileapi()
 	return vim.tbl_get(Capabilities.json, "fileApi") ~= nil
 end
 
--- TODO: make this async
 Capabilities.setup = function(callback)
-	local lines = {}
 	vim.schedule(function()
-		vim.fn.jobstart({ config.cmake.cmake_path, "-E", "capabilities" }, {
-			on_stdout = function(_, data)
-				if data then
-					vim.list_extend(lines, data)
+		vim.system({ config.cmake.cmake_path, "-E", "capabilities" }, { text = true }, function(obj)
+			if obj.code == 0 then
+				Capabilities.json = vim.json.decode(obj.stdout)
+				if type(callback) == "function" then
+					callback()
 				end
-			end,
-			on_exit = function(_, code, _)
-				if code == 0 then
-					Capabilities.json = vim.json.decode(table.concat(lines, ""))
-					if type(callback) == "function" then
-						callback()
-					end
-				else
-					vim.notify("error " .. tostring(code) .. ". 'cmake -E capabilities'", vim.log.levels.ERROR)
-				end
-			end,
-		})
+			else
+				vim.notify("error " .. tostring(obj.code) .. ". 'cmake -E capabilities'", vim.log.levels.ERROR)
+			end
+		end)
 	end)
 end
 

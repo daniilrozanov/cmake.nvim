@@ -4,7 +4,7 @@ local autocmds = require("cmake.autocmds")
 local utils = require("cmake.utils")
 local constants = require("cmake.constants")
 
-local uv = vim.uv or vim.loop
+local uv = vim.uv
 
 local M = {}
 
@@ -19,7 +19,7 @@ function M.setup(opts)
 					autocmds.set_on_variants()
 					commands.register_commands()
 				end)
-				require("cmake.project").setup({ first_time_only = true })
+				require("cmake.project").setup()
 			else
 			end
 		end)

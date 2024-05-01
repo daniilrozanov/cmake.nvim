@@ -22,25 +22,23 @@ local default_config = {
 				},
 			},
 		},
-		parallel_jobs = nil, --#(vim.uv or vim.loop).cpu_info(),
-		-- source_directory = "${workspaceFolder}", --TODO: not used
+		parallel_jobs = nil,
 	},
 	save_before_build = true,
 	generate_after_save = true,
-	terminal = {
-		direction = "horizontal",
-		display_name = "CMake", --TODO: not used
+	cmake_terminal = {
+		split = "below",
+		size = 15,
 		close_on_exit = "success",
-		hidden = false,
+		open_on_start = true,
 		clear_env = false,
-		focus = false,
+		enter = false,
 	},
-	runner_terminal = {
-		direction = "horizontal",
-		close_on_exit = false,
-		hidden = false,
+	target_terminal = {
+		split = "below",
+		size = 15,
 		clear_env = false,
-		focus = false,
+		enter = true,
 	},
 	notification = {
 		after = "success",
@@ -49,6 +47,7 @@ local default_config = {
 		short = { sep = " × ", show = true },
 		long = { sep = " ❄ ", show = false },
 	},
+	keybinds = {},
 }
 
 local M = vim.deepcopy(default_config)

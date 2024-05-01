@@ -1,32 +1,39 @@
-local Terminal = require("toggleterm.terminal").Terminal
-local ui = require("toggleterm.ui")
 local config = require("cmake.config")
+
+local api = vim.api
 
 local M = {}
 
-local cmake
+local cmake = {
+	bufnr = nil,
+	window = nil,
+	jobid = nil,
+}
+
 local runnable
 
---TODO: cmake must be an id, not terminal
-
-M.cmake_execute = function(command, opts)
-	opts = opts or {}
-	if cmake then
-		cmake:shutdown()
-		cmake = nil
+local prepare_cmake_buf = function()
+	if cmake.bufnr and api.nvim_buf_is_valid(cmake.bufnr) then
+		api.nvim_buf_delete(cmake.bufnr, { force = true })
 	end
-	local term_opts = {
-		direction = config.terminal.direction,
-		display_name = config.terminal.display_name,
-		hidden = config.terminal.hidden,
-		clear_env = config.terminal.clear_env,
-		cmd = command.cmd .. " " .. command.args,
-		-- env = command.env,
-		on_exit = function(t, pid, code, name)
+	cmake.bufnr = api.nvim_create_buf(false, false)
+end
+
+local termopen = function(command, opts)
+	-- For some reason termopen() doesn't like an empty env table
+	if command.env and vim.tbl_isempty(command.env) then
+		command.env = nil
+	end
+	vim.fn.termopen(command.cmd .. " " .. command.args, {
+		-- detach = 1,
+		cwd = command.cwd,
+		env = command.env,
+		clear_env = config.clear_env,
+		on_exit = function(pid, code, event)
 			if code == 0 then
 				command.after_success()
-				if config.terminal.close_on_exit == "success" then
-					t:close()
+				if config.cmake_terminal.close_on_exit == "success" or config.cmake_terminal.close_on_exit == true then
+					api.nvim_win_close(cmake.window, true)
 				end
 				if config.notification.after == "success" or config.notification.after == true then
 					vim.notify(
@@ -34,56 +41,68 @@ M.cmake_execute = function(command, opts)
 						vim.log.levels.INFO
 					)
 				end
-			elseif config.notification.after == "failure" or config.notification.after == true then
-				local msg = "CMake failed. Code " .. tostring(code)
-				local opt_msg = vim.tbl_get(opts, "notify", "err_message")
-				if type(opt_msg) == "string" then
-					msg = opt_msg
-				elseif type(opt_msg) == "function" then
-					msg = opt_msg(code)
+			else
+				if config.notification.after == "failure" or config.notification.after == true then
+					local msg = "CMake failed. Code " .. tostring(code)
+					local opt_msg = vim.tbl_get(opts, "notify", "err_message")
+					if type(opt_msg) == "string" then
+						msg = opt_msg
+					elseif type(opt_msg) == "function" then
+						msg = opt_msg(code)
+					end
+					vim.notify(msg, vim.log.levels.ERROR)
 				end
-				vim.notify(msg, vim.log.levels.ERROR)
 			end
 		end,
-		on_open = function(t)
-			t:set_mode("n")
-		end,
-	}
-	term_opts.close_on_exit = type(config.terminal.close_on_exit) == "boolean" and config.terminal.close_on_exit
-		or false
-	cmake = Terminal:new(term_opts)
-	cmake:open()
-	if not config.terminal.focus and cmake:is_focused() then
-		ui.goto_previous()
-		ui.stopinsert()
+	})
+end
+
+local open_window = function()
+	if not cmake.bufnr then
+		vim.notify("No CMake buffer created yet", vim.log.levels.INFO)
+		return
 	end
+	cmake.window = api.nvim_open_win(cmake.bufnr, config.cmake_terminal.enter, {
+		win = 0,
+		split = config.cmake_terminal.split,
+		height = config.cmake_terminal.size,
+		width = config.cmake_terminal.size,
+	})
+end
+
+M.cmake_execute = function(command, opts)
+	opts = opts or {}
+
+	prepare_cmake_buf()
+	if config.cmake_terminal.open_on_start and not (cmake.window and api.nvim_win_is_valid(cmake.window)) then
+		open_window()
+	end
+	vim.api.nvim_buf_call(cmake.bufnr, function()
+		termopen(command, opts)
+	end)
 end
 
 M.cmake_toggle = function()
-	if cmake then
-		cmake:toggle()
+	if cmake.window and api.nvim_win_is_valid(cmake.window) then
+		api.nvim_win_close(cmake.window, true)
 	else
-		vim.notify("No CMake terminal")
+		open_window()
 	end
 end
 
 M.target_execute = function(command, opts)
 	opts = opts or {}
-	local term_opts = {
-		direction = config.runner_terminal.direction,
-		close_on_exit = config.runner_terminal.close_on_exit,
-		hidden = config.runner_terminal.hidden,
-		clear_env = config.clear_env,
-	}
-	if not runnable then
-		runnable = Terminal:new(term_opts)
-	end
-	if not runnable:is_open() then
-		runnable:open()
-	end
-	if command.cmd then
-		runnable:send(command.cmd, not config.runner_terminal.focus)
-	end
+	local bufnr = api.nvim_create_buf(true, false)
+	api.nvim_open_win(bufnr, config.target_terminal.enter, {
+		win = 0,
+		split = config.target_terminal.split,
+		height = config.target_terminal.size,
+		width = config.target_terminal.size,
+	})
+	api.nvim_buf_call(bufnr, function()
+		vim.cmd.terminal()
+		api.nvim_chan_send(vim.bo.channel, command.cwd .. "/" .. command.cmd)
+	end)
 end
 
 return M

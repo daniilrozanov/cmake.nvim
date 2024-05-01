@@ -1,8 +1,5 @@
 local config = require("cmake.config")
-local capabilities = require("cmake.capabilities")
-local scan = require("plenary.scandir")
-local Path = require("plenary.path")
-local uv = vim.uv or vim.loop
+local uv = vim.uv
 
 local utils = {}
 
@@ -75,22 +72,26 @@ function utils.write_file(path, txt, callback)
 	end)
 end
 
---TODO: async mkdir -p
-
 function utils.symlink(src_path, dst_path, callback)
-	--TODO: replace to vim.fs.joinpath after nvim 0.10 release
-	local src = Path:new(src_path, "compile_commands.json")
-	if src:exists() then
-		vim.cmd(
-			'silent exec "!'
-				.. config.cmake_path
-				.. " -E create_symlink "
-				.. src:normalize()
-				.. " "
-				.. Path:new(dst_path, "compile_commands.json"):normalize()
-				.. '"'
-		)
-	end
+	local src = vim.fs.joinpath(src_path, "compile_commands.json")
+	utils.file_exists(src, function()
+		uv.spawn(config.cmake.cmake_path, {
+			args = {
+				"-E",
+				"create_symlink",
+				src,
+				vim.fs.joinpath(dst_path, "compile_commands.json"),
+			},
+		}, function(code, signal)
+			if code ~= 0 then
+				vim.notify("CMake: error while creating symlink. Code " .. tostring(code), vim.log.levels.ERROR)
+				return
+			end
+			if type(callback) == "function" then
+				callback()
+			end
+		end)
+	end)
 end
 
 return utils

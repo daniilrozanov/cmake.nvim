@@ -32,17 +32,20 @@ function autocmds.setup()
 	--without CMakeLists.txt neovim starts like `nvim CMakeLists.txt`. In this case initial
 	--setup will not make the affect and to correctry process the file save, we need to create
 	--this autocommand so it reinitializes the project if it has not been done before. IMHO this
-	--is not the best way to do this
-	if config.generate_after_save then
-		vim.api.nvim_create_autocmd({ "BufEnter" }, {
-			group = cmake_nvim_augroup,
-			pattern = constants.cmakelists,
-			callback = function(args)
-				actions.reset_project({ first_time_only = true })
-			end,
-			desc = "Set up project on open CMakeLists.txt if not set before",
-		})
-	end
+	--is not the best way to do this. Also, if newly buffer associated with CMakeLists.txt will not
+	--be saved and just closed, but user will continue to use nvim, CMake commands still will be
+	--able while it sholdn't. Two options is give up or handle all this corner cases
+	--
+	-- if config.generate_after_save then
+	-- 	vim.api.nvim_create_autocmd({ "BufEnter" }, {
+	-- 		group = cmake_nvim_augroup,
+	-- 		pattern = constants.cmakelists,
+	-- 		callback = function(args)
+	-- 			actions.reset_project({ first_time_only = true })
+	-- 		end,
+	-- 		desc = "Set up project on open CMakeLists.txt if not set before",
+	-- 	})
+	-- end
 end
 
 return autocmds

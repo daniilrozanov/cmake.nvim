@@ -3,7 +3,7 @@ local VariantConfig = require("cmake.variants")
 local FileApi = require("cmake.fileapi")
 local utils = require("cmake.utils")
 local constants = require("cmake.constants")
-local uv = vim.uv or vim.loop
+local uv = vim.uv
 
 local Project = {}
 
@@ -23,7 +23,6 @@ end
 local append_after_success_actions = function()
 	local read_reply = function(v, not_presented)
 		if (not_presented and not fileapis[v.directory]) or not not_presented then
-			--TODO: replace to vim.fs.joinpath after nvim 0.10 release
 			utils.symlink(v.directory .. "/compile_commands.json", uv.cwd())
 			fileapis[v.directory] = { targets = {} }
 			FileApi.read_reply(v.directory, function(target)
@@ -60,9 +59,11 @@ local init_fileapis = function()
 end
 
 -- TODO: validate yaml and fallback to config's variants if not valid
+-- TODO: make variants order more stable. at least when reading from file
 function Project.from_variants(variants)
+	local variants_copy = vim.deepcopy(variants)
 	local list_variants = {}
-	for k, v in pairs(variants) do
+	for k, v in pairs(variants_copy) do
 		table.insert(list_variants, v)
 		list_variants[#list_variants]._name = k
 	end
@@ -79,6 +80,17 @@ function Project.from_variants(variants)
 	end
 	append_after_success_actions()
 	init_fileapis()
+end
+
+--NOTE: Neovim craches on this code
+function Project.clear_cache(callback)
+	uv.fs_unlink(vim.fs.joinpath(Project.current_directory(), "CMakeCache.txt"), function(f_err)
+		assert(f_err, f_err)
+		uv.fs_unlink(vim.fs.joinpath(Project.current_directory(), "CMakeFiles"), function(d_err)
+			assert(d_err, d_err)
+			callback()
+		end)
+	end)
 end
 
 function Project.generate_options(opts)
@@ -192,6 +204,7 @@ function Project.create_fileapi_query(opts, callback)
 end
 
 local do_setup = function(opts)
+	reset_internals()
 	local variants_path = vim.fs.joinpath(uv.cwd(), constants.variants_yaml_filename)
 	utils.file_exists(variants_path, function(variants_exists)
 		if variants_exists then
@@ -210,7 +223,6 @@ function Project.setup(opts)
 	if opts.first_time_only and initialised then
 		return
 	end
-	reset_internals()
 	if not initialised then
 		require("cmake.capabilities").setup(function()
 			do_setup(opts)
