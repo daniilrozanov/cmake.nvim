@@ -67,7 +67,10 @@ end
 
 local build_options = {
 	clean = true,
-	targets = complete_value(project.current_targets, {}, "name"),
+	j = function()
+		return {}
+	end,
+	target = complete_value(project.current_targets, {}, "name"),
 }
 
 local install_options = {
@@ -128,7 +131,7 @@ function M.parse(args)
 			if not value then
 				result[key] = true
 			else
-				if key == "targets" then
+				if key == "target" then
 					result[key] = vim.split(value, ",")
 				else
 					result[key] = value

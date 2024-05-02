@@ -54,7 +54,7 @@ end
 ---@return table
 local _extend_generate_command = function(command, opts)
 	opts = opts or {}
-	local new = vim.tbl_deep_extend("keep", command, {})
+	local new = vim.deepcopy(command)
 	return new
 end
 
@@ -63,12 +63,15 @@ end
 ---@param opts BuildOpts
 ---@return table
 local _extend_build_command = function(command, opts)
-	local new = vim.tbl_deep_extend("keep", command, {})
+	local new = vim.deepcopy(command)
 	if opts.j then
 		new.args = new.args .. " -j " .. tostring(opts.j)
 	end
 	if opts.clean then
 		new.args = new.args .. " --clean-first"
+	end
+	if opts.target and #opts.target ~= 0 then
+		new.args = new.args .. " --target " .. table.concat(opts.target, " ")
 	end
 	return new
 end
@@ -157,7 +160,7 @@ end
 ---@class BuildOpts
 ---@field clean boolean|nil
 ---@field j number|nil
----@field target number|nil
+---@field target string[]|nil
 
 --- Build project with current build option
 --- @param opts BuildOpts

@@ -15,6 +15,7 @@ function M.setup(opts)
 		autocmds.setup()
 		utils.file_exists(vim.fs.joinpath(uv.cwd(), constants.cmakelists), function(cmake_lists_exists)
 			if cmake_lists_exists then
+				--TODO: init autocommands needs to be related with project setup
 				vim.schedule(function()
 					autocmds.set_on_variants()
 					commands.register_commands()

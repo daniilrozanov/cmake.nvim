@@ -9,10 +9,34 @@ local Project = {}
 
 local initialised = false
 
+---@type CMakeGenerateOption[]
 local configs = {}
+---@type number|nil
 local current_config = nil
+---@type CMakeFileApi[]
 local fileapis = {}
 
+---@class CMakeGenerateOption Initial configuration, which defines generation stage, it's build stages, it's targets and other artifacts produced by `cmake -S <source_dir> -B <build_dir> ...` command
+---@field generate_command CMakeCommand Command which will be executed on generate stage
+---@field directory string Absolute path to build directory created after generate stage
+---@field build_options CMakeBuildOption[] Build options available for this generate options. Each build option have it's generate option scope
+---@field current_build number Current build option's index
+---@field name string[] Parts of short name to display. Should be concatenated with delimiter
+---@field long_name string[] Parts of long name to display. Should be concatenated with delimiter
+
+---@class CMakeBuildOption Option corresponding to build stage
+---@field command CMakeCommand Command which will be executed on build stage
+---@field name string[] Parts of short name to display. Should be concatenated with delimiter
+---@field long_name string[] Parts of long name to display. Should be concatenated with delimiter
+
+---@class CMakeCommand Command table to pass to any kind of runner or task manager
+---@field cmd string Path to executable command
+---@field args string|nil Command's arguments
+---@field env {[string]:string}[]|nil Environvemt variables
+---@field cwd string Current working directory
+---@field after_success function|nil Function which neends to be invoked after command succesfully executed
+
+--- Set internal variables to default
 local reset_internals = function()
 	configs = {}
 	current_config = nil
@@ -20,6 +44,8 @@ local reset_internals = function()
 	initialised = true
 end
 
+--- Set `after_success` function to each command which may be executed.
+--- These functions do minimal to plugin works
 local append_after_success_actions = function()
 	local read_reply = function(v, not_presented)
 		if (not_presented and not fileapis[v.directory]) or not not_presented then
@@ -42,6 +68,7 @@ local append_after_success_actions = function()
 	end
 end
 
+--- Clear existing fileapis and read from available build directories
 local init_fileapis = function()
 	fileapis = {}
 	for _, v in ipairs(configs) do
@@ -60,6 +87,9 @@ end
 
 -- TODO: validate yaml and fallback to config's variants if not valid
 -- TODO: make variants order more stable. at least when reading from file
+
+---Initialise project from variants
+---@param variants table
 function Project.from_variants(variants)
 	local variants_copy = vim.deepcopy(variants)
 	local list_variants = {}
@@ -82,6 +112,7 @@ function Project.from_variants(variants)
 	init_fileapis()
 end
 
+--- Delete `CMakeCache.txt` and `CMakeFiles` from current build directory
 function Project.clear_cache()
 	local cd = Project.current_directory()
 	local Path = require("plenary.path")
@@ -96,31 +127,43 @@ function Project.clear_cache()
 	-- end)
 end
 
-function Project.generate_options(opts)
-	opts = opts or {}
+--- Get all project's generate configs
+--- @return CMakeGenerateOption[]
+function Project.generate_options()
 	return configs
 end
 
---TODO: remove opts where it is useless
-function Project.current_generate_option(opts)
-	opts = opts or {}
+--- Get current generate option
+---@return unknown
+function Project.current_generate_option()
 	assert(current_config, "No current project config")
 	return configs[current_config]
 end
 
+---Get current generate option's index
+---@return number|nil
 function Project.current_generate_option_idx()
 	return current_config
 end
 
+--- Set current generate option by index
+--- @param idx number
 function Project.set_current_generate_option(idx)
+	assert(
+		not (idx < 1 or idx > #configs),
+		"Index is out of range. Index is " .. idx .. " for " .. #configs .. " config(s)"
+	)
 	current_config = idx
 end
 
---TODO: check on out of range
+--- Current build option's index
+---@return number
 function Project.current_build_option_idx()
 	return configs[current_config].current_build
 end
 
+---Current build option
+---@return CMakeBuildOption|nil
 function Project.current_build_option()
 	if not Project.current_build_option_idx() then
 		return nil
@@ -128,14 +171,22 @@ function Project.current_build_option()
 	return configs[current_config].build_options[Project.current_build_option_idx()]
 end
 
+--- Set current build option by index
+--- @param idx number
 function Project.set_current_build_option(idx)
+	local _size = #Project[current_config].build_options
+	assert(not (idx < 1 or idx > _size), "Index is out of range. Index is " .. idx .. " for " .. _size .. "config(s)")
 	configs[current_config].current_build = idx
 end
 
+---Current build directory (usually `build-<...>`)
+---@return string|nil
 function Project.current_directory()
 	return current_config and configs[current_config].directory or nil
 end
 
+---Current fileapi
+---@return CMakeFileApi|nil
 local current_fileapi = function()
 	if not Project.current_directory() or not fileapis[Project.current_directory()] then
 		return nil
@@ -143,10 +194,20 @@ local current_fileapi = function()
 	return fileapis[Project.current_directory()]
 end
 
+---Set current executable target by it's index
+---@param idx number
 function Project.set_current_executable_target(idx)
+	assert(not current_fileapi())
+	assert(
+		not (idx < 1 or idx > #current_fileapi().targets),
+		"Index is out of range. Index is " .. idx .. " for " .. #current_fileapi().targets(" target(s)")
+	)
+	assert(current_fileapi().targets[idx].type == "EXECUTABLE", "target is not executable")
 	current_fileapi().current_executable_target = idx
 end
 
+---Current executable target's index
+---@return number|nil
 function Project.current_executable_target_idx()
 	local _curr_fileapi = current_fileapi()
 	if not _curr_fileapi then
@@ -155,6 +216,8 @@ function Project.current_executable_target_idx()
 	return _curr_fileapi.current_executable_target
 end
 
+---Current executable target
+---@return CMakeFileApiTarget|nil
 function Project.current_executable_target()
 	local _curr_fileapi = current_fileapi()
 	if not _curr_fileapi then
@@ -167,6 +230,9 @@ function Project.current_executable_target()
 	return _curr_fileapi.targets[_curr_exe_target_idx]
 end
 
+---Targets for current generate option (configuration)
+---@param opts {type: string|nil}|nil Filter parameters
+---@return CMakeFileApiTarget[]|nil
 function Project.current_targets(opts)
 	opts = opts or {}
 	local _curr_fileapi = current_fileapi()
@@ -181,6 +247,11 @@ function Project.current_targets(opts)
 	return _curr_fileapi.targets
 end
 
+--TODO: opts -> config identifier (which can be number, string or configuration table)
+
+---Create `query.json` file so `cmake` will produce reply directory
+---@param opts {idx:number, path:string, config:CMakeGenerateOption}|nil Specity configuration to generate query
+---@param callback function Callback. Will be executed after query created or if it already exists
 function Project.create_fileapi_query(opts, callback)
 	opts = opts or {}
 	local path
@@ -221,6 +292,9 @@ local do_setup = function(opts)
 	end)
 end
 
+---Setup project, which means get capabilities, create configurations from presets or variants
+---and read fileapis
+---@param opts {first_time_only: boolean}|nil
 function Project.setup(opts)
 	opts = opts or {}
 	if opts.first_time_only and initialised then

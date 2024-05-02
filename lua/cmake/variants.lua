@@ -79,6 +79,9 @@ local _build_command = function(obj, build_args)
 	return ret
 end
 
+---Create configuration from variant
+---@param source table
+---@return CMakeGenerateOption
 function VariantConfig:new(source)
 	local obj = {}
 	local subs = vim.tbl_deep_extend("keep", global_variant_subs, { ["${buildType}"] = source.buildType })

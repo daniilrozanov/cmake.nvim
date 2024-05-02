@@ -8,6 +8,16 @@ local reply_dir_suffix = { ".cmake", "api", "v1", "reply" }
 
 local FileApi = {}
 
+---@class CMakeFileApi
+---@field targets CMakeFileApiTarget[]
+---@field current_executable_target? number Index for current executable target
+---
+---@class CMakeFileApiTarget
+---@field id string Unique tagret id
+---@field name string Target name
+---@field type "EXECUTABLE"|"STATIC_LIBRARY"|"SHARED_LIBRARY"|"MODULE_LIBRARY"|"OBJECT_LIBRARY"|"INTERFACE_LIBRARY"|"UTILITY" Target type
+---@field path string|nil Path to executable associated with target
+
 function FileApi.create(path, callback)
 	local query = vim.fs.joinpath(path, unpack(query_path_suffix))
 	utils.file_exists(query, function(exists)
@@ -55,10 +65,12 @@ function FileApi.read_reply(path, callback)
 										Path:new(reply_dir, target.jsonFile):absolute(),
 										function(target_data)
 											local target_json = vim.json.decode(target_data)
+											---@type CMakeTarget
 											local _target = {
 												id = target_json.id,
 												name = target_json.name,
 												type = target_json.type,
+												path = nil,
 											}
 											if target_json.artifacts then
 												--NOTE: add_library(<name> OBJECT ...) could contain more than ohe object in artifacts
