@@ -4,7 +4,6 @@
 ---@field generate_after_save boolean Generate after saving `CMakeLists.txt` file
 ---@field cmake_terminal CMakeConfigCMakeTerminal Settings for terminal where cmake will be executed
 ---@field target_terminal CMakeConfigTargetTerminal Settings for terminal where executable targets will be executed
----@field disabled_commands string[] List of commands that will not be initialized
 
 ---@class CMakeConfigCMake
 ---@field cmake_path string Path to `cmake` executable
@@ -97,7 +96,6 @@ local default_config = {
 		long = { sep = " ❄ ", show = false },
 	},
 	keybinds = {},
-	disable_commands = {},
 }
 
 local M = vim.deepcopy(default_config)
