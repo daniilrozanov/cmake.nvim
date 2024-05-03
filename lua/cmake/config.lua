@@ -16,7 +16,8 @@
 ---@field parallel_jobs? number By specifying a number, you can define how many jobs are run in parallel during the build
 ---@field build_directory string Build directory template
 ---@field environment {[string]:string} Environment for all `cmake` commands
----@field build_environment {[string]:string} Environment for all `cmake --build` commands
+---@field configure_environment {[string]:string} Environment for all `cmake -B ...` commands
+---@field build_environment {[string]:string} Environment for all `cmake --build ...` commands
 
 ---@class CMakeVariant
 ---@field default string Default choice

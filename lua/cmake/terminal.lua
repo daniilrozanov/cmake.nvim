@@ -12,6 +12,13 @@ local cmake = {
 
 local runnable
 
+local scroll_to_bottom = function()
+	local info = vim.api.nvim_get_mode()
+	if info and (info.mode == "n" or info.mode == "nt") then
+		vim.cmd("normal! G")
+	end
+end
+
 local prepare_cmake_buf = function()
 	if cmake.bufnr and api.nvim_buf_is_valid(cmake.bufnr) then
 		api.nvim_buf_delete(cmake.bufnr, { force = true })
@@ -28,12 +35,17 @@ local termopen = function(command, opts)
 		-- detach = 1,
 		cwd = command.cwd,
 		env = command.env,
-		clear_env = config.clear_env,
+		clear_env = config.cmake_terminal.clear_env,
+		on_stdout = function(_, data, _)
+			api.nvim_buf_call(cmake.bufnr, scroll_to_bottom)
+		end,
 		on_exit = function(pid, code, event)
 			if code == 0 then
 				command.after_success()
 				if config.cmake_terminal.close_on_exit == "success" or config.cmake_terminal.close_on_exit == true then
-					api.nvim_win_close(cmake.window, true)
+					if api.nvim_win_is_valid(cmake.window) then
+						api.nvim_win_close(cmake.window, true)
+					end
 				end
 				if config.notification.after == "success" or config.notification.after == true then
 					vim.notify(
