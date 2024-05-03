@@ -67,8 +67,8 @@ local default_config = {
 			choices = {
 				debug = { short = "Debug", buildType = "Debug" },
 				release = { short = "Release", buildType = "Release" },
-				relWithDebInfo = { short = "Release with debug info", buildType = "RelWithDebInfo" },
-				minSizeRel = { short = "Minimal size releaze", buildType = "MinSizeRel" },
+				relWithDebInfo = { short = "RelWithDebInfo", buildType = "RelWithDebInfo" },
+				minSizeRel = { short = "MinSizeRel", buildType = "MinSizeRel" },
 			},
 		},
 	},
