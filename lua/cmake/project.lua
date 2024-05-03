@@ -287,7 +287,7 @@ local do_setup = function(opts)
 				Project.from_variants(yaml)
 			end)
 		else
-			Project.from_variants(config.cmake.variants)
+			Project.from_variants(config.variants)
 		end
 	end)
 end

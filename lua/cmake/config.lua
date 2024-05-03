@@ -4,6 +4,7 @@
 ---@field generate_after_save boolean Generate after saving `CMakeLists.txt` file
 ---@field cmake_terminal CMakeConfigCMakeTerminal Settings for terminal where cmake will be executed
 ---@field target_terminal CMakeConfigTargetTerminal Settings for terminal where executable targets will be executed
+---@field variants {[string]:CMakeVariant} Default variants. Parameters defined in variants have more priority than defined in `cmake = {...}` ones
 
 ---@class CMakeConfigCMake
 ---@field cmake_path string Path to `cmake` executable
@@ -13,7 +14,6 @@
 ---@field build_tool_args string[] An array of additional arguments to pass to the underlying build tool
 ---@field generator? string Set to a string to override CMake Tools’ preferred generator logic. If this is set, CMake will unconditionally use it as the -G CMake generator command line argument
 ---@field parallel_jobs? number By specifying a number, you can define how many jobs are run in parallel during the build
----@field variants {[string]:CMakeVariant} Default variants. Parameters defined in variants have more priority than defined in `cmake = {...}` ones
 
 ---@class CMakeVariant
 ---@field default string Default choice
@@ -58,19 +58,19 @@ local default_config = {
 		build_args = {},
 		build_tool_args = {},
 		generator = nil,
-		variants = {
-			buildType = {
-				default = "debug",
-				description = "Build type",
-				choices = {
-					debug = { short = "Debug", buildType = "Debug" },
-					release = { short = "Release", buildType = "Release" },
-					relWithDebInfo = { short = "Release with debug info", buildType = "RelWithDebInfo" },
-					minSizeRel = { short = "Minimal size releaze", buildType = "MinSizeRel" },
-				},
+		parallel_jobs = nil,
+	},
+	variants = {
+		buildType = {
+			default = "debug",
+			description = "Build type",
+			choices = {
+				debug = { short = "Debug", buildType = "Debug" },
+				release = { short = "Release", buildType = "Release" },
+				relWithDebInfo = { short = "Release with debug info", buildType = "RelWithDebInfo" },
+				minSizeRel = { short = "Minimal size releaze", buildType = "MinSizeRel" },
 			},
 		},
-		parallel_jobs = nil,
 	},
 	save_before_build = true,
 	generate_after_save = true,

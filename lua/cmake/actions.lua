@@ -251,7 +251,7 @@ M.edit_variants = function()
 				vim.cmd(string.format("e %s", constants.variants_yaml_filename))
 			end)
 		else
-			local default_yaml = require("cmake.lyaml").dump(config.cmake.variants)
+			local default_yaml = require("cmake.lyaml").dump(config.variants)
 			utils.write_file(constants.variants_yaml_filename, default_yaml, function()
 				vim.schedule(function()
 					vim.cmd(string.format("e %s", constants.variants_yaml_filename))
