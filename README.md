@@ -22,3 +22,4 @@ of targets, projects, directories and entities dependent on them (WIP).
   - ...
 
   and go to it's definitions, depentent target and other possible entities in any meaningful relations
+- [ ] quickfix
