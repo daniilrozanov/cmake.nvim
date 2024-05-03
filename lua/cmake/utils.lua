@@ -56,6 +56,14 @@ function utils.read_file(path, callback)
 	end)
 end
 
+function utils.read_file_sync(path)
+	local fd = assert(vim.uv.fs_open(path, "r", 438))
+	local stat = assert(vim.uv.fs_fstat(fd))
+	local data = assert(vim.uv.fs_read(fd, stat.size, 0))
+	assert(vim.uv.fs_close(fd))
+	return data
+end
+
 function utils.write_file(path, txt, callback)
 	uv.fs_open(path, "w", 438, function(err, fd)
 		assert(not err, err)

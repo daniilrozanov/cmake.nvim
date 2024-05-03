@@ -1,5 +1,4 @@
 local capabilities = require("cmake.capabilities")
-local Path = require("plenary.path")
 local scan = require("plenary.scandir")
 local utils = require("cmake.utils")
 
@@ -37,7 +36,7 @@ function FileApi.create(path, callback)
 end
 
 function FileApi.read_reply(path, callback)
-	local reply_dir = Path:new(path, unpack(reply_dir_suffix)):absolute()
+	local reply_dir = vim.fs.joinpath(path, unpack(reply_dir_suffix))
 	utils.file_exists(reply_dir, function(exists)
 		if not exists then
 			return
@@ -54,33 +53,27 @@ function FileApi.read_reply(path, callback)
 					local index = vim.json.decode(index_data)
 					for _, object in ipairs(index.objects) do
 						if object.kind == "codemodel" then
-							utils.read_file(Path:new(reply_dir, object.jsonFile):absolute(), function(codemodel_data)
+							utils.read_file(vim.fs.joinpath(reply_dir, object.jsonFile), function(codemodel_data)
 								local codemodel = vim.json.decode(codemodel_data)
-								--FIX: this loop does not read all files if codemodel contains many targets (is will crash actually).
-								--This is because libuv (or some external settings) forbids to open files
-								-- in async mode more than some limit number. Seems like the solution is
-								-- to queue these calls and limit max number for opened files per time
 								for _, target in ipairs(codemodel.configurations[1].targets) do
-									utils.read_file(
-										Path:new(reply_dir, target.jsonFile):absolute(),
-										function(target_data)
-											local target_json = vim.json.decode(target_data)
-											---@type CMakeTarget
-											local _target = {
-												id = target_json.id,
-												name = target_json.name,
-												type = target_json.type,
-												path = nil,
-											}
-											if target_json.artifacts then
-												--NOTE: add_library(<name> OBJECT ...) could contain more than ohe object in artifacts
-												-- so maybe in future it will be useful to handle not only first one. Current behaviour
-												-- aims to get path for only EXECUTABLE targets
-												_target.path = target_json.artifacts[1].path
-											end
-											callback(_target)
+									local work = vim.uv.new_work(utils.read_file_sync, function(target_data)
+										local target_json = vim.json.decode(target_data)
+										---@type CMakeTarget
+										local _target = {
+											id = target_json.id,
+											name = target_json.name,
+											type = target_json.type,
+											path = nil,
+										}
+										if target_json.artifacts then
+											--NOTE: add_library(<name> OBJECT ...) could contain more than ohe object in artifacts
+											-- so maybe in future it will be useful to handle not only first one. Current behaviour
+											-- aims to get path for only EXECUTABLE targets
+											_target.path = target_json.artifacts[1].path
 										end
-									)
+										callback(_target)
+									end)
+									vim.uv.queue_work(work, vim.fs.joinpath(reply_dir, target.jsonFile))
 								end
 							end)
 						end
@@ -93,7 +86,7 @@ function FileApi.read_reply(path, callback)
 end
 
 function FileApi.query_exists(path, callback)
-	utils.file_exists(Path:new(path, unpack(query_path_suffix)):normalize(), function(query_exists)
+	utils.file_exists(vim.fs.joinpath(path, unpack(query_path_suffix)), function(query_exists)
 		callback(query_exists)
 	end)
 end
@@ -103,7 +96,7 @@ function FileApi.exists(path, callback)
 		if not query_exists then
 			callback(false)
 		else
-			utils.file_exists(Path:new(path, unpack(reply_dir_suffix)):normalize(), function(reply_exists)
+			utils.file_exists(vim.fs.joinpath(path, unpack(reply_dir_suffix)), function(reply_exists)
 				callback(reply_exists)
 			end)
 		end

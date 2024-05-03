@@ -189,7 +189,7 @@ M.build_select = function(opts)
 		format_item = function(item)
 			return table.concat(item.name, config.variants_display.short.sep)
 		end,
-	}, function(choice, idx)
+	}, function(_, idx)
 		if not idx then
 			return
 		end

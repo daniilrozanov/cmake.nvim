@@ -174,7 +174,7 @@ end
 --- Set current build option by index
 --- @param idx number
 function Project.set_current_build_option(idx)
-	local _size = #Project[current_config].build_options
+	local _size = #configs[current_config].build_options
 	assert(not (idx < 1 or idx > _size), "Index is out of range. Index is " .. idx .. " for " .. _size .. "config(s)")
 	configs[current_config].current_build = idx
 end

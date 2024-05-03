@@ -14,6 +14,9 @@
 ---@field build_tool_args string[] An array of additional arguments to pass to the underlying build tool
 ---@field generator? string Set to a string to override CMake Tools’ preferred generator logic. If this is set, CMake will unconditionally use it as the -G CMake generator command line argument
 ---@field parallel_jobs? number By specifying a number, you can define how many jobs are run in parallel during the build
+---@field build_directory string Build directory template
+---@field environment {[string]:string} Environment for all `cmake` commands
+---@field build_environment {[string]:string} Environment for all `cmake --build` commands
 
 ---@class CMakeVariant
 ---@field default string Default choice
