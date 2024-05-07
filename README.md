@@ -7,6 +7,18 @@ installing (WIP) and packaging (WIP) a project.
 In addition, it provides a way to navigate through the project in terms of CMake, for example, displaying a list
 of targets, projects, directories and entities dependent on them (WIP).
 
+# Install
+
+With Lazy.nvim do
+```lua
+{
+  'daniilrozanov/cmake.nvim',
+  lazy = false,
+  opts = {--[[...]]}
+}
+```
+Since the plugin is asynchronous, you don't have to lazily load it. Loading time in a directory with a project such as ranges v3 is about 4 ms.
+
 ## TODO
 
 - [ ] Support CMake Presets
