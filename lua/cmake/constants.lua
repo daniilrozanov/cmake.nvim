@@ -1,4 +1,4 @@
 return {
-	variants_yaml_filename = "cmake-variants.yaml",
-	cmakelists = "CMakeLists.txt",
+  variants_yaml_filename = "cmake-variants.yaml",
+  cmakelists = "CMakeLists.txt",
 }

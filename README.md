@@ -35,3 +35,4 @@ Since the plugin is asynchronous, you don't have to lazily load it. Loading time
 
   and go to it's definitions, depentent target and other possible entities in any meaningful relations
 - [ ] quickfix
+- [ ] Ability to keep one runner terminal per project or target
